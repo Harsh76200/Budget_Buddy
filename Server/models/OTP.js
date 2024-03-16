@@ -7,7 +7,7 @@ const OTPSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
-    otp: {
+    uniqueCode: {
         type: String,
         required: true,
     },

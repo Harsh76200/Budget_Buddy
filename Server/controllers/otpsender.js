@@ -1,6 +1,6 @@
 const otpGenerator = require('otp-generator');
 const OTP = require('../models/OTP');
-const User = require('../models/userModel');
+const User = require('../models/user');
 
 
 exports.getOTP = async (req, res) => {
@@ -32,7 +32,8 @@ exports.getOTP = async (req, res) => {
     });
     console.log('OTP generated: ', otp);
 
-    let result = await OTP.findOne({ otp: otp });
+    let result = await OTP.findOne({ uniqueCode: otp });
+    console.log(result);
 
     while (result) {
       otp = otpGenerator.generate(6, {
@@ -40,12 +41,11 @@ exports.getOTP = async (req, res) => {
         lowerCaseAlphabets: false,
         specialChars: false,
       });
-      result = await OTP.findOne({ otp: otp });
+      result = await OTP.findOne({ uniqueCode: otp });
     }
 
     const otpPayload = { email, otp };
-
-    const otpBody = await OTP.create(otpPayload);
+    const otpBody = await OTP.insertOne(otpPayload);
 
     console.log('OTP Body', otpBody);
 
@@ -63,3 +63,19 @@ exports.getOTP = async (req, res) => {
     });
   }
 };
+
+exports.getOTPByEmail = async  (req, res) =>{
+    try {
+        const email = req.params.email;
+        const otpData = await OTP.findOne({ email });
+
+        if (!otpData) {
+            return res.status(404).json({ message: "OTP not found" });
+        }
+
+        res.status(200).json({ otp: otpData.otp, createdAt: otpData.createdAt });
+    } catch (error) {
+        console.log("Error retrieving OTP:", error);
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
